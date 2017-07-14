@@ -20,6 +20,16 @@ setup(
       """,
     packages=find_packages(),
     url='https://github.com/tos-kamiya/json2jqq/',
-    license='License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+        'Topic :: Text Processing :: Markup',
+        'Topic :: Utilities',
+    ],
     description='CLI Tool to extract query templates for jq tool from json data',
 )
