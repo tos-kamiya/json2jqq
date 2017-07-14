@@ -1,3 +1,4 @@
+import io
 import sys
 
 import ijson
@@ -5,16 +6,20 @@ import ijson
 from .version import __version__
 
 
-def extract_queries_from_json(inp):
+def extract_queries_from_json(inp, internal_nodes=False):
+    if isinstance(inp, str):
+        inp = io.StringIO(inp)
+
     prefix_set = set()
     array_prefix_set = set()
 
     for prefix, event, value in ijson.parse(inp):
         if event == 'start_array':
             array_prefix_set.add((prefix + '.item') if prefix != '' else 'item')
-        elif event == 'end_array':
+        elif not internal_nodes and event in ('end_array', 'start_map', 'end_map', 'map_key'):
             pass
-        elif event not in ('start_map', 'end_map', 'map_key'):
+        else:
+            # 'boolean', 'number', 'string', or 'null'
             prefix_set.add(prefix)
 
     array_prefixes = list(array_prefix_set)
@@ -33,20 +38,28 @@ def extract_queries_from_json(inp):
 
 __doc__ = """Extract query templates for jq tool from json data.
 
-Usage: json2jqq < data.json
+Usage: json2jqq [-a] < data.json
+
+Options:
+  -a    Show internal (non-leaf) nodes.
 """
 
 
 def main():
-    if len(sys.argv) >= 2:
-        if sys.argv[1] in ('-h', '--help'):
+    option_all_nodes = False
+    for a in sys.argv[1:]:
+        if a in ('-h', '--help'):
             print(__doc__)
             return
-        elif sys.argv[1] in ('-v', '--version'):
+        elif a in ('-v', '--version'):
             print("json2qq %s" % __version__)
             return
+        elif a == '-a':
+            option_all_nodes = True
+        else:
+            sys.exit("error: too many command-line argument.")
 
-    qs = extract_queries_from_json(sys.stdin)
+    qs = extract_queries_from_json(sys.stdin, internal_nodes=option_all_nodes)
     print('\n'.join(qs))
 
 
