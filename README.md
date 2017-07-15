@@ -5,9 +5,16 @@ CLI Tool to extract query templates for [jq](https://stedolan.github.io/jq/) too
 
 ## Installation
 
+Install: 
+
 ```sh
-cd /directory/where/json2jqq/was/downloaded
-sudo pip3 install .
+sudo pip3 install git+https://github.com/tos-kamiya/json2jqq.git
+```
+
+Uninstall:
+
+```sh
+sudo pip3 uninstall json2jqq
 ```
 
 ## Tutorial
