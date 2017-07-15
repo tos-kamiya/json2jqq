@@ -31,7 +31,7 @@ $ cat > myrepos.json <<EOF
   { "author": "Toshihiro Kamiya", "url": "https://github.com/tos-kamiya/giftplayer/" }
 ]
 EOF
-$ cat myrepos.json | json2jqq
+$ json2jqq myrepos.json
 .[].author
 .[].url
 ```
@@ -42,4 +42,12 @@ Each of extracted queries will work as `jq`'s filter.
 $ jq '.[].url' myrepos.json
 "https://github.com/tos-kamiya/json2jqq/"
 "https://github.com/tos-kamiya/giftplayer/"
+```
+
+Option `-s` will show a sample value for each query.
+
+```sh
+$ json2jqq -s myrepos.json
+.[].author	Toshihiro Kamiya
+.[].url	https://github.com/tos-kamiya/json2jqq/
 ```

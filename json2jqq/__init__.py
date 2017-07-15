@@ -4,6 +4,7 @@ import sys
 import ijson
 
 from .version import __version__
+from .uni_open import uni_open_c
 
 
 def extract_queries_from_json(inp, internal_nodes=False, sample_values=False):
@@ -48,17 +49,18 @@ def extract_queries_from_json(inp, internal_nodes=False, sample_values=False):
 
 __doc__ = """Extract query templates for jq tool from json data.
 
-Usage: json2jqq [options] < data.json
+Usage: json2jqq [options] [<INPUT.JSON>]
 
 Options:
-  -a    Show internal (non-leaf) nodes.
-  -s    Show samples (the first values for keys). 
+  -a            Show internal (non-leaf) nodes.
+  -s            Show samples (the first values for keys). 
 """
 
 
 def main():
     option_all_nodes = False
     option_samples = False
+    input_file = None
     for a in sys.argv[1:]:
         if a in ('-h', '--help'):
             print(__doc__)
@@ -74,11 +76,16 @@ def main():
                     option_samples = True
                 else:
                     sys.exit("error: unknown option: %s" % repr(op))
+        elif input_file is None:
+            input_file = a
         else:
             sys.exit("error: too many command-line argument.")
+    if input_file is None:
+        input_file = '-'
 
-    r = extract_queries_from_json(sys.stdin, internal_nodes=option_all_nodes,
-            sample_values=option_samples)
+    with uni_open_c(input_file, 'r') as inp:
+        r = extract_queries_from_json(inp, internal_nodes=option_all_nodes,
+                sample_values=option_samples)
     if option_samples:
         queries, sample_value_dict = r
         for q in queries:
