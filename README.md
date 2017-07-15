@@ -1,7 +1,9 @@
 json2jqq
 ========
 
-CLI Tool to extract query templates for [jq](https://stedolan.github.io/jq/) tool from json data.
+Suppose you got a json data, which you do not know structure, but have to analyze... `json2qq` is here.
+
+A CLI Tool to extract query templates for [jq](https://stedolan.github.io/jq/) tool from json data.
 
 ## Installation
 
@@ -19,6 +21,8 @@ sudo pip3 uninstall json2jqq
 
 ## Tutorial
 
+Extract a query template for `jq` from json data.
+
 ```sh
 $ bash
 $ cat > myrepos.json <<EOF
@@ -30,6 +34,11 @@ EOF
 $ cat myrepos.json | json2jqq
 .[].author
 .[].url
+```
+
+Each of extracted queries will work as `jq`'s filter.
+
+```sh
 $ jq '.[].url' myrepos.json
 "https://github.com/tos-kamiya/json2jqq/"
 "https://github.com/tos-kamiya/giftplayer/"
