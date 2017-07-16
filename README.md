@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tos-kamiya/json2jqq.svg?branch=master)](https://travis-ci.org/tos-kamiya/json2jqq)
+
 json2jqq
 ========
 
@@ -7,7 +9,7 @@ A CLI Tool to extract query templates for [jq](https://stedolan.github.io/jq/) t
 
 ## Installation
 
-Install: 
+Install:
 
 ```sh
 sudo pip3 install git+https://github.com/tos-kamiya/json2jqq.git
