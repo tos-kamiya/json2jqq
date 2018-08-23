@@ -7,44 +7,78 @@ from .version import __version__
 from .uni_open import uni_open_c
 
 
-def extract_queries_from_json(inp, internal_nodes=False, sample_values=False):
+def extract_paths_from_json_iter(inp):
     if isinstance(inp, str):
         inp = io.StringIO(inp)
 
-    prefix_set = set()
-    array_prefix_set = set()
-    sample_value_table = {}
+    path_set = set()
+
+    stack = []
+
+    def get_path():
+        q = ''.join(stack)
+        if not q.startswith('.'):
+            return '.' + q
+        return q
 
     for prefix, event, value in ijson.parse(inp):
         if event == 'start_array':
-            array_prefix_set.add((prefix + '.item') if prefix != '' else 'item')
-        elif not internal_nodes and event in ('end_array', 'start_map', 'end_map', 'map_key'):
-            pass
+            q = get_path()
+            if q not in path_set:
+                yield q
+                path_set.add(q)
+            stack.append('[]')
+            q = get_path()
+            if q not in path_set:
+                yield q
+                path_set.add(q)
+        elif event == 'map_key':
+            stack.pop()  # remove a previous key or a dummy (in case of the first element).
+            stack.append('.' + value)
+            q = get_path()
+            if q not in path_set:
+                yield q
+                path_set.add(q)
+        elif event == 'start_map':
+            q = get_path()
+            if q not in path_set:
+                yield q
+                path_set.add(q)
+            stack.append(None)  # dummy
+        elif event in ('end_array', 'end_map'):
+            stack.pop()
+
+
+def extract_path_value_pairs_from_json_iter(inp):
+    if isinstance(inp, str):
+        inp = io.StringIO(inp)
+
+    path_set = set()
+
+    stack = []
+
+    def get_path():
+        q = ''.join(stack)
+        if not q.startswith('.'):
+            return '.' + q
+        return q
+
+    for prefix, event, value in ijson.parse(inp):
+        if event == 'start_array':
+            stack.append('[]')
+        elif event == 'map_key':
+            stack.pop()  # remove a previous key or a dummy (in case of the first element).
+            stack.append('.' + value)
+        elif event == 'start_map':
+            stack.append(None)  # dummy
+        elif event in ('end_array', 'end_map'):
+            stack.pop()
         else:
-            # 'boolean', 'number', 'string', or 'null'
-            if sample_values and (value is not None or event == 'null') and prefix not in prefix_set:
-                sample_value_table[prefix] = value
-            prefix_set.add(prefix)
-
-    array_prefixes = list(array_prefix_set)
-    array_prefixes.sort(key=len, reverse=True)
-
-    queries = []
-    svt = {}
-    for p in sorted(prefix_set):
-        q = p
-        for ap in array_prefixes:
-            if q == ap or q.startswith(ap) and q[len(ap)] == '.':
-                q = ap[:-4] + '[]' + q[len(ap):]
-        q = '.' + q.replace('.[]', '[]')
-        queries.append(q)
-        if sample_values and p in sample_value_table:
-            svt[q] = sample_value_table[p]
-
-    if sample_values:
-        return queries, svt
-    else:
-        return queries
+            assert event in ('boolean', 'number', 'string', 'null')
+            q = get_path()
+            if q not in path_set:
+                yield q, value
+                path_set.add(q)
 
 
 __doc__ = """Extract query templates for jq tool from json data.
@@ -53,7 +87,7 @@ Usage: json2jqq [options] [<INPUT.JSON>]
 
 Options:
   -a            Show internal (non-leaf) nodes.
-  -s            Show samples (the first values for keys). 
+  -s            Show samples.
 """
 
 
@@ -80,24 +114,24 @@ def main():
             input_file = a
         else:
             sys.exit("error: too many command-line argument.")
+    if option_all_nodes and option_samples:
+        sys.exit("error: options -a and -s are mutually exclusive.")
     if input_file is None:
         input_file = '-'
 
     with uni_open_c(input_file, 'r') as inp:
-        r = extract_queries_from_json(inp, internal_nodes=option_all_nodes,
-                sample_values=option_samples)
-    if option_samples:
-        queries, sample_value_dict = r
-        for q in queries:
-            if q in sample_value_dict:
-                v = sample_value_dict[q]
+        if option_samples:
+            for q, v in extract_path_value_pairs_from_json_iter(inp):
                 vstr = 'null' if v is None else str(v)
                 print('%s\t%s' % (q, vstr))
+        else:
+            if option_all_nodes:
+                assert not option_samples
+                for q in extract_paths_from_json_iter(inp):
+                    print('%s\t' % q)
             else:
-                print('%s\t' % q)
-    else:
-        queries = r
-        print('\n'.join(queries))
+                for q, v in extract_path_value_pairs_from_json_iter(inp):
+                    print('%s\t' % q)
 
 
 if __name__ == '__main__':
