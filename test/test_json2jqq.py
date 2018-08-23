@@ -20,7 +20,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_map_of_map(self):
         json_data = '''{
-    "first": {"first-first": 11, "first-second": 12}, 
+    "first": {"first-first": 11, "first-second": 12},
     "second": {"second-first": 21, "second-second": 22}
 }'''
         queries = extract_queries_from_json(json_data)
@@ -48,9 +48,20 @@ class TestStringMethods(unittest.TestCase):
         queries = extract_queries_from_json(json_data, internal_nodes=True)
         self.assertEqual(queries, ['.', '.[]', '.[][]'])
 
+    def test_array_of_map(self):
+        json_data = '''[
+  { "author": "Toshihiro Kamiya", "url": "https://github.com/tos-kamiya/json2jqq/" },
+  { "author": "Toshihiro Kamiya", "url": "https://github.com/tos-kamiya/giftplayer/" }
+]
+'''
+        queries = extract_queries_from_json(json_data)
+        self.assertEqual(queries, ['.[].author', '.[].url'])
+        queries = extract_queries_from_json(json_data, internal_nodes=True)
+        self.assertEqual(queries, ['.', '.[]', '.[].author', '.[].url'])
+
     def test_null_value(self):
         json_data = '''{
-    "first": {"first-first": 11, "first-second": null}, 
+    "first": {"first-first": 11, "first-second": null},
     "second": {"second-first": 21, "second-second": 22}
 }'''
         queries = extract_queries_from_json(json_data)
